@@ -1,6 +1,14 @@
 const api = window.pageSoundDelay;
 const $ = id => document.getElementById(id);
 let delay = 0;
+let stateSyncTimer;
+
+function readDelayInput() {
+  const raw = $('delay').value.trim().replace(',', '.');
+  if (raw === '' || raw === '.' || raw === '-') return null;
+  const value = Number(raw);
+  return Number.isFinite(value) ? value : NaN;
+}
 let measuring = false;
 let started = 0;
 let timerId;
@@ -24,7 +32,7 @@ document.querySelectorAll('[data-delta]').forEach(button => {
   button.onclick = () => applyDelay(delay + Number(button.dataset.delta));
 });
 $('apply').onclick = () => {
-  const value = Number($('delay').value);
+  const value = readDelayInput();
   applyDelay(value);
 };
 $('enabled').onchange = event => api.send('set-enabled', event.target.checked);
@@ -68,6 +76,7 @@ $('measure').onclick = () => {
 
 api.onStatus(status => { $('status').textContent = status; });
 api.onState(state => {
+  if (measuring) return;
   if (!state) return;
   delay = Number(state.delay) || 0;
   showDelay(delay);
@@ -76,3 +85,6 @@ api.onState(state => {
   $('muted').checked = Boolean(state.muted);
 });
 showDelay(0);
+
+// 主进程状态同步不能覆盖用户正在编辑的文本框。
+stateSyncTimer = setInterval(() => api.send('request-state'), 1000);

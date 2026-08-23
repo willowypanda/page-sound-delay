@@ -1,7 +1,7 @@
 const { app, BrowserWindow, WebContentsView, ipcMain, session } = require('electron');
 const path = require('node:path');
 
-const DEFAULT_ROOM = '8178490';
+const DEFAULT_ROOM = '22604707';
 let toolbarHeight = 92;
 let appState = { delay: 0, enabled: false, muted: false };
 
@@ -71,6 +71,10 @@ function createWindow() {
   win.contentView.addChildView(pageView);
   layout();
   win.on('resize', layout);
+  win.on('maximize', layout);
+  win.on('unmaximize', layout);
+  win.on('enter-full-screen', layout);
+  win.on('leave-full-screen', layout);
   pageView.webContents.loadURL(liveUrl(DEFAULT_ROOM));
   pageView.webContents.on('preload-error', (_event, preloadPath, error) => {
     console.error(`[page-sound-delay] preload failed: ${preloadPath}`, error);
@@ -90,6 +94,8 @@ ipcMain.on('psd-toolbar-height', (_event, height) => {
   toolbarHeight = Math.max(60, Math.min(220, Math.ceil(Number(height) || 92)));
   layout();
 });
+
+ipcMain.on('request-state', sendState);
 
 ipcMain.on('psd-command', (_event, command) => {
   if (!pageView || !command) return;
