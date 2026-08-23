@@ -6,6 +6,7 @@
   "private": true,
   "scripts": {
     "start": "electron .",
+    "start:unsafe": "electron --no-sandbox .",
     "check": "node --check main.js && node --check preload.js"
   },
   "devDependencies": {
