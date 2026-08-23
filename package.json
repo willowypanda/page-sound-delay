@@ -1,0 +1,15 @@
+{
+  "name": "page-sound-delay",
+  "version": "0.2.0",
+  "description": "带 Bilibili 直播声音延时控制的 Electron 浏览器",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "check": "node --check main.js && node --check preload.js"
+  },
+  "devDependencies": {
+    "electron": "^37.0.0"
+  }
+}
+
