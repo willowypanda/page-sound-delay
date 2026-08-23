@@ -222,23 +222,41 @@
     setStatus('');
   }
 
-  // 通过 B 站接口解析真实房间号并取流地址
+  // 通过 B 站接口解析真实房间号并取流地址,经本地代理 /stream 转发以绕过 CORS
   async function getLiveStreamUrl(roomId) {
     // 1) 短号 -> 真实房间号
     let realId = roomId;
     try {
-      const r = await fetch(`https://api.live.bilibili.com/room/v1/Room/room_init?id=${roomId}`);
+      const r = await fetch(`/api/room-init?id=${roomId}`);
       const j = await r.json();
       if (j.code === 0 && j.data && j.data.room_id) realId = j.data.room_id;
     } catch (_) {}
 
-    // 2) 取播放地址
-    const r2 = await fetch(`https://api.live.bilibili.com/room/v1/Room/playUrl?cid=${realId}&qn=0&platform=web`);
+    // 2) 取播放地址(新接口,返回多协议流;优先 FLV+AVC,flv.js 兼容性最好)
+    const r2 = await fetch(`/api/play-info?room_id=${realId}&protocol=0,1&format=0,1,2&codec=0,1`);
     const j2 = await r2.json();
-    if (j2.code !== 0 || !j2.data || !j2.data.durl || !j2.data.durl.length) {
-      throw new Error(j2.message || '未开播或无流地址');
-    }
-    return j2.data.durl[j2.data.durl.length - 1].url;
+    if (j2.code !== 0) throw new Error(j2.message || '获取播放信息失败');
+
+    let flvUrl = null;
+    try {
+      const streams = j2.data.playurl_info.playurl.stream;
+      for (const s of streams) {
+        if (s.protocol_name !== 'http_stream') continue;
+        for (const f of s.format) {
+          if (f.format_name !== 'flv') continue;
+          for (const c of f.codec) {
+            if (c.codec_name !== 'avc') continue; // flv.js 不支持 HEVC in FLV
+            const u = c.url_info[0];
+            flvUrl = u.host + c.base_url + u.extra;
+            break;
+          }
+          if (flvUrl) break;
+        }
+        if (flvUrl) break;
+      }
+    } catch (_) {}
+    if (!flvUrl) throw new Error('未开播或无可用 FLV 流');
+    return '/stream?url=' + encodeURIComponent(flvUrl);
   }
 
   // ---------- 测量延时 ----------
