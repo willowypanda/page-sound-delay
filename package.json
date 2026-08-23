@@ -8,10 +8,10 @@
     "start": "electron .",
     "start:unsafe": "electron --no-sandbox .",
     "check": "node --check main.js && node --check preload.js && node --check toolbar-preload.js && node --check toolbar.js",
-    "dist": "electron-builder",
-    "dist:linux": "electron-builder --linux AppImage deb",
-    "dist:mac": "electron-builder --mac dmg",
-    "dist:win": "electron-builder --win nsis"
+    "dist": "electron-builder --publish never",
+    "dist:linux": "electron-builder --linux AppImage deb --publish never",
+    "dist:mac": "electron-builder --mac dmg --publish never",
+    "dist:win": "electron-builder --win nsis --publish never"
   },
   "devDependencies": {
     "electron": "^37.0.0",
