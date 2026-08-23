@@ -37,7 +37,7 @@ function roomUrl(value) {
   if (!/^https?:\/\//i.test(raw)) return null;
   try {
     const url = new URL(raw);
-    if (url.protocol !== 'https:' || (url.hostname !== 'live.bilibili.com' && !url.hostname.endsWith('.bilibili.com'))) return null;
+    if (url.protocol !== 'https:' || url.hostname !== 'live.bilibili.com') return null;
     return url.href;
   } catch (_) { return null; }
 }
