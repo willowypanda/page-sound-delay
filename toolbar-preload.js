@@ -8,7 +8,7 @@ contextBridge.exposeInMainWorld('pageSoundDelay', {
 });
 /* The toolbar can wrap when the window is resized; report its actual height. */
 window.addEventListener('DOMContentLoaded', () => {
-  const report = () => window.pageSoundDelay.reportHeight(document.body.scrollHeight);
+  const report = () => ipcRenderer.send('psd-toolbar-height', document.body.scrollHeight || 92);
   report();
   new ResizeObserver(report).observe(document.body);
 });
