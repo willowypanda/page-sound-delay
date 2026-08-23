@@ -72,7 +72,7 @@
           <label class="form-check-label" for="delay-switch">启用延时</label>
         </div>
         <span id="audio-status" class="text-secondary"></span>
-        <button class="btn btn-outline-secondary btn-sm" id="btn-resume-audio">恢复音频(浏览器自动播放策略)</button>
+        <button class="btn btn-outline-secondary btn-sm" id="btn-resume-audio">播放 / 恢复音频</button>
       </div>
     </div>
   </div>
@@ -143,7 +143,12 @@
   // 浏览器自动播放策略:用户手势后才能出声
   $('btn-resume-audio').addEventListener('click', async () => {
     if (audioCtx && audioCtx.state === 'suspended') await audioCtx.resume();
-    if (mediaEl) { try { await mediaEl.play(); } catch (_) {} }
+    if (mediaEl) {
+      try { await mediaEl.play(); }
+      catch (e) { setStatus('浏览器仍未允许播放: ' + e.message, true); return; }
+    } else {
+      await startAudioPipeline().catch(e => setStatus('播放错误: ' + e.message, true));
+    }
     updateAudioStatus();
   });
 
@@ -153,7 +158,7 @@
   }
   function updateAudioStatus() {
     if (!delayEnabled) { setStatus(''); return; }
-    if (audioCtx && audioCtx.state === 'suspended') setStatus('音频被浏览器暂停,请点击"恢复音频"', true);
+    if (audioCtx && audioCtx.state === 'suspended') setStatus('音频被浏览器暂停,请点击"播放 / 恢复音频"', true);
     else if (mediaEl && !mediaEl.paused) setStatus('延时音频播放中');
     else setStatus('音频未播放', true);
   }
@@ -162,6 +167,13 @@
   async function startAudioPipeline() {
     if (!flvjs.isSupported()) throw new Error('浏览器不支持 flv.js (需要 MSE)');
     if (flvPlayer) return;
+
+    // 在“加载直播间”按钮的同步用户手势阶段创建并解锁 AudioContext。
+    // 如果等 API 请求完成后才 resume(), Chromium 会把它视为非用户操作并静音。
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      audioCtx.resume().catch(() => {});
+    }
 
     const roomId = roomInput.value.trim();
     const streamUrl = await getLiveStreamUrl(roomId);
@@ -178,7 +190,9 @@
       isLive: true,
       cors: true,
     }, {
-      enableStashBuffer: false,
+      // 开启 stash buffer,避免低延时模式在网络抖动时频繁卡住
+      enableStashBuffer: true,
+      stashInitialSize: 384,
       liveBufferLatencyChasing: true,
     });
     flvPlayer.attachMediaElement(mediaEl);
@@ -189,14 +203,18 @@
       flvPlayer.on(flvjs.Events.ERROR, (_, et, ed) => rej(new Error(`${et}: ${ed}`)));
       setTimeout(() => rej(new Error('拉流超时')), 15000);
     });
-    await mediaEl.play();
-
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     srcNode = audioCtx.createMediaElementSource(mediaEl);
     delayNode = audioCtx.createDelay(7200); // 最大 2 小时
     delayNode.delayTime.value = delayEnabled ? Math.max(delaySeconds, 0) : 0;
     srcNode.connect(delayNode);
     delayNode.connect(audioCtx.destination);
+    // 必须在用户点击触发的流程中解锁 AudioContext;否则画面会播放但 Web Audio 静音
+    try { await audioCtx.resume(); } catch (_) {}
+    try { await mediaEl.play(); } catch (e) {
+      setStatus('请点击“播放 / 恢复音频”开始声音: ' + e.message, true);
+      // 播放失败时不伪报“播放中”,由按钮再次触发 play()
+      return;
+    }
     if (audioCtx.state === 'suspended') setStatus('音频被浏览器暂停,请点击"恢复音频"', true);
     else setStatus('延时音频播放中');
 
