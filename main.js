@@ -38,6 +38,32 @@ function sendState() {
   if (win && !win.isDestroyed()) win.webContents.send('psd-state', appState);
 }
 
+function syncPageState() {
+  if (!pageView || pageView.webContents.isDestroyed()) return;
+  for (const [type, payload] of [
+    ['set-delay', appState.delay],
+    ['set-enabled', appState.enabled],
+    ['set-muted', appState.muted],
+  ]) {
+    pageView.webContents.send('psd-control', { type, payload });
+  }
+}
+
+function openLivePage(target) {
+  pageView.webContents.loadURL(target);
+  sendStatus('正在打开直播间…');
+}
+
+function handleOpenRoom(value) {
+  const target = roomUrl(value);
+  if (!target) {
+    sendStatus('直播间 URL 或 ID 无效');
+    return false;
+  }
+  openLivePage(target);
+  return true;
+}
+
 function roomUrl(value) {
   const raw = String(value).trim();
   if (/^\d+$/.test(raw)) return liveUrl(raw);
@@ -82,6 +108,10 @@ function createWindow() {
   win.on('unmaximize', layout);
   win.on('enter-full-screen', layout);
   win.on('leave-full-screen', layout);
+  pageView.webContents.on('did-finish-load', () => {
+    syncPageState();
+    sendStatus('Bilibili 页面已加载，正在寻找播放器…');
+  });
   pageView.webContents.loadURL(liveUrl(DEFAULT_ROOM));
   pageView.webContents.on('preload-error', (_event, preloadPath, error) => {
     console.error(`[page-sound-delay] preload failed: ${preloadPath}`, error);
@@ -111,10 +141,7 @@ ipcMain.on('request-state', sendState);
 ipcMain.on('psd-command', (_event, command) => {
   if (!pageView || !command) return;
   if (command.type === 'open-room' || command.type === 'open-custom') {
-    const target = roomUrl(command.payload);
-    if (!target) { sendStatus('直播间 ID 或 URL 无效'); return; }
-    pageView.webContents.loadURL(target);
-    sendStatus('正在打开直播间…');
+    handleOpenRoom(command.payload);
     return;
   }
   if (command.type === 'set-delay') appState.delay = Math.max(0, Math.min(120, Number(command.payload) || 0));
