@@ -25,6 +25,9 @@ function createWindow() {
   });
 
   win.loadURL(liveUrl(DEFAULT_ROOM));
+  win.webContents.on('preload-error', (_event, preloadPath, error) => {
+    console.error(`[page-sound-delay] preload failed: ${preloadPath}`, error);
+  });
   win.on('closed', () => { win = null; });
 }
 

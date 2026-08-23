@@ -146,9 +146,19 @@
     }
   }
 
-  makePanel();
-  const observer = new MutationObserver(() => findVideo());
-  observer.observe(document.documentElement, { childList: true, subtree: true });
-  let tries = 0;
-  const timer = setInterval(() => { findVideo(); if (++tries > 60) clearInterval(timer); }, 500);
+  function boot() {
+    if (!document.documentElement) {
+      document.addEventListener('DOMContentLoaded', boot, { once: true });
+      return;
+    }
+    makePanel();
+    setStatus('控制条已加载,等待 Bilibili 播放器...', false);
+    const observer = new MutationObserver(() => findVideo());
+    observer.observe(document.documentElement, { childList: true, subtree: true });
+    let tries = 0;
+    const timer = setInterval(() => { findVideo(); if (++tries > 120) clearInterval(timer); }, 500);
+  }
+
+  // preload 可能在 documentElement 创建之前执行,必须延后首次 DOM 操作。
+  boot();
 })();
