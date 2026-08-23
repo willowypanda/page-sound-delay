@@ -12,10 +12,17 @@
   <span class="title">B站直播音频延时神器</span>
   <div class="group"><button id="sage" class="primary">打开悲怆先知</button><button id="test">打开测试页</button><button id="custom">打开自选直播</button></div>
   <div class="group"><button data-delta="-5">−5s</button><button data-delta="-1">−1s</button><button data-delta="-0.5">−0.5s</button><button data-delta="-0.1">−0.1s</button><input id="delay" class="current" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" value="0.0" aria-label="当前延时输入"><button data-delta="0.1">+0.1s</button><button data-delta="0.5">+0.5s</button><button data-delta="1">+1s</button><button data-delta="5">+5s</button></div>
-  <div class="group"><button id="apply">应用延时</button><span class="applied">已应用: <b id="applied">0.0s</b></span></div>
+  <div class="group"><button id="apply">应用延时</button><span class="applied">当前生效延时：<b id="applied">0.0s</b></span></div>
   <div class="group"><button id="measure">测量延时</button><span id="timer">0.0s</span></div>
   <label><input id="enabled" type="checkbox"> 启用延时</label><label><input id="muted" type="checkbox"> 静音</label>
   <span id="status" class="status">正在加载…</span>
+</div>
+<div id="custom-dialog" class="popup-backdrop" hidden>
+  <form class="popup" id="custom-form">
+    <h3>打开自选直播</h3>
+    <label for="custom-value">直播间 URL 或 ID</label>
+    <input id="custom-value" type="text" autocomplete="off" placeholder="例如 22604707 或 https://live.bilibili.com/..."><div class="actions"><button type="button" id="custom-cancel">取消</button><button type="submit" class="primary">打开</button></div>
+  </form>
 </div>
 <script src="toolbar.js"></script>
 </body>

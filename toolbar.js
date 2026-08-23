@@ -1,8 +1,6 @@
 const api = window.pageSoundDelay;
 const $ = id => document.getElementById(id);
 let delay = 0;
-let stateSyncTimer;
-
 function readDelayInput() {
   const raw = $('delay').value.trim().replace(',', '.');
   if (raw === '' || raw === '.' || raw === '-') return null;
@@ -19,11 +17,14 @@ function validDelay(value) {
 function showDelay(value) {
   $('delay').value = value.toFixed(1);
 }
+function showApplied(value) {
+  $('applied').textContent = value.toFixed(1) + 's';
+}
 function applyDelay(value) {
   if (!validDelay(value)) { alert('请输入 0 到 120 之间的合法延时（单位：秒）'); return false; }
   delay = Math.round(value * 10) / 10;
   showDelay(delay);
-  $('applied').textContent = delay.toFixed(1) + 's';
+  showApplied(delay);
   api.send('set-delay', delay);
   return true;
 }
@@ -35,23 +36,28 @@ $('apply').onclick = () => {
   const value = readDelayInput();
   applyDelay(value);
 };
+$('delay').addEventListener('keydown', event => {
+  if (event.key === 'Enter') $('apply').click();
+});
 $('enabled').onchange = event => api.send('set-enabled', event.target.checked);
 $('muted').onchange = event => api.send('set-muted', event.target.checked);
 
 $('test').onclick = () => api.send('open-room', '8178490');
 $('sage').onclick = () => api.send('open-room', '22604707');
 $('custom').onclick = () => {
-  const value = prompt('请输入 Bilibili 直播间 URL 或 ID：', '');
-  if (value === null) return;
-  const raw = value.trim();
-  let valid = /^\d+$/.test(raw);
-  if (!valid) {
-    try {
-      const url = new URL(raw);
-      valid = url.protocol === 'https:' && url.hostname === 'live.bilibili.com';
-    } catch (_) { valid = false; }
+  $('custom-dialog').hidden = false;
+  $('custom-value').value = '';
+  $('custom-value').focus();
+};
+$('custom-cancel').onclick = () => { $('custom-dialog').hidden = true; };
+$('custom-form').onsubmit = event => {
+  event.preventDefault();
+  const raw = $('custom-value').value.trim();
+  if (!/^\d+$/.test(raw) && !/^https:\/\/live\.bilibili\.com\//i.test(raw)) {
+    alert('直播间 URL 或 ID 无效，请检查后重试。');
+    return;
   }
-  if (!valid) { alert('直播间 URL 或 ID 无效，请检查后重试。'); return; }
+  $('custom-dialog').hidden = true;
   api.send('open-custom', raw);
 };
 
@@ -80,7 +86,7 @@ api.onState(state => {
   if (!state) return;
   delay = Number(state.delay) || 0;
   showDelay(delay);
-  $('applied').textContent = delay.toFixed(1) + 's';
+  showApplied(delay);
   $('enabled').checked = Boolean(state.enabled);
   $('muted').checked = Boolean(state.muted);
 });
