@@ -35,7 +35,16 @@ $('sage').onclick = () => api.send('open-room', '22604707');
 $('custom').onclick = () => {
   const value = prompt('请输入 Bilibili 直播间 URL 或 ID：', '');
   if (value === null) return;
-  api.send('open-custom', value.trim());
+  const raw = value.trim();
+  let valid = /^\d+$/.test(raw);
+  if (!valid) {
+    try {
+      const url = new URL(raw);
+      valid = url.protocol === 'https:' && url.hostname === 'live.bilibili.com';
+    } catch (_) { valid = false; }
+  }
+  if (!valid) { alert('直播间 URL 或 ID 无效，请检查后重试。'); return; }
+  api.send('open-custom', raw);
 };
 
 $('measure').onclick = () => {
