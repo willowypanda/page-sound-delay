@@ -7,10 +7,49 @@
   "scripts": {
     "start": "electron .",
     "start:unsafe": "electron --no-sandbox .",
-    "check": "node --check main.js && node --check preload.js && node --check toolbar-preload.js && node --check toolbar.js"
+    "check": "node --check main.js && node --check preload.js && node --check toolbar-preload.js && node --check toolbar.js",
+    "dist": "electron-builder",
+    "dist:linux": "electron-builder --linux AppImage deb",
+    "dist:mac": "electron-builder --mac dmg",
+    "dist:win": "electron-builder --win nsis"
   },
   "devDependencies": {
-    "electron": "^37.0.0"
+    "electron": "^37.0.0",
+    "electron-builder": "^26.0.0"
+  },
+  "build": {
+    "appId": "com.willowypanda.pagesounddelay",
+    "productName": "Page Sound Delay",
+    "asar": true,
+    "files": [
+      "main.js",
+      "preload.js",
+      "toolbar.html",
+      "toolbar.js",
+      "toolbar-preload.js",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "linux": {
+      "target": ["AppImage", "deb"],
+      "category": "AudioVideo",
+      "artifactName": "${name}-${version}-${arch}.${ext}"
+    },
+    "mac": {
+      "target": ["dmg"],
+      "category": "public.app-category.utilities",
+      "artifactName": "${name}-${version}-${arch}.${ext}"
+    },
+    "win": {
+      "target": ["nsis"],
+      "artifactName": "${name}-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
 }
 
