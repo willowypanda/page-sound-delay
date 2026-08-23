@@ -2,26 +2,65 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title> B站直播音频延时神器 </title>
+<title>B站直播音频延时神器</title>
 <style>
-:root{color-scheme:dark}*{box-sizing:border-box}html,body{margin:0;background:#161b22;color:#e8edf2;font:14px/1.4 system-ui,sans-serif}body{padding:8px 12px;border-bottom:1px solid #48515b}.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.group{display:flex;gap:5px;align-items:center}.title{font-weight:700;white-space:nowrap}button,input{border:1px solid #59636d;border-radius:6px;color:#edf2f7;background:#28313a;padding:5px 8px}button{cursor:pointer;white-space:nowrap}button:hover{background:#3b4854}.primary{background:#1677d2;border-color:#2489e5}.danger{background:#a93636;border-color:#d45555}.current{width:78px;text-align:center;font-weight:700}.applied{color:#9fb1c2;white-space:nowrap}.status{color:#9fb1c2;font-size:12px;flex:1;min-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}[hidden]{display:none!important}.popup-backdrop{position:absolute;inset:0;background:#161b22;display:flex;align-items:flex-start;justify-content:center;padding-top:8px;z-index:10;border-bottom:1px solid #48515b}.popup{background:#222b35;border:1px solid #59636d;border-radius:10px;padding:18px;width:min(430px,90vw);box-shadow:0 10px 35px #0009}.popup h3{margin:0 0 12px}.popup input{width:100%;margin:8px 0}.popup .actions{display:flex;justify-content:flex-end;gap:8px}@media(max-width:900px){.status{min-width:100px}}
+:root{color-scheme:dark}*{box-sizing:border-box}html,body{margin:0;background:#161b22;color:#e8edf2;font:14px/1.4 system-ui,sans-serif}body{padding:8px 12px;border-bottom:1px solid #48515b}
+.toolbar{display:flex;flex-direction:column;gap:8px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.row1{align-items:baseline}
+.row1 .title{font-weight:700;margin-right:16px}
+.row1 a{color:#7ab8f5;text-decoration:none}
+.row1 a:hover{text-decoration:underline}
+.row2{gap:6px}
+.row3{gap:10px;align-items:center}
+.group{display:flex;gap:5px;align-items:center}
+button,input{border:1px solid #59636d;border-radius:6px;color:#edf2f7;background:#28313a;padding:5px 8px}
+button{cursor:pointer;white-space:nowrap}
+button:hover{background:#3b4854}
+.primary{background:#1677d2;border-color:#2489e5}
+.danger{background:#a93636;border-color:#d45555}
+.current{width:78px;text-align:center;font-weight:700}
+.applied{color:#9fb1c2;white-space:nowrap}
+.status{color:#9fb1c2;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+[hidden]{display:none!important}
+.popup-backdrop{position:absolute;inset:0;background:#161b22;display:flex;align-items:flex-start;justify-content:center;padding-top:8px;z-index:10;border-bottom:1px solid #48515b}
+.popup{background:#222b35;border:1px solid #59636d;border-radius:10px;padding:18px;width:min(430px,90vw);box-shadow:0 10px 35px #0009}
+.popup h3{margin:0 0 12px}
+.popup input{width:100%;margin:8px 0}
+.popup .actions{display:flex;justify-content:flex-end;gap:8px}
 </style>
 </head>
 <body>
 <div class="toolbar">
-  <span class="title">B站直播音频延时神器</span>
-  <div class="group"><button id="sage" class="primary">打开悲怆先知</button><button id="test">打开测试页</button><button id="custom">打开自选直播</button></div>
-  <div class="group"><button data-delta="-5">−5s</button><button data-delta="-1">−1s</button><button data-delta="-0.5">−0.5s</button><button data-delta="-0.1">−0.1s</button><input id="delay" class="current" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" value="0.0" aria-label="当前延时输入"><button data-delta="0.1">+0.1s</button><button data-delta="0.5">+0.5s</button><button data-delta="1">+1s</button><button data-delta="5">+5s</button></div>
-  <div class="group"><button id="apply">应用延时</button><span class="applied">当前生效延时：<b id="applied">0.0s</b></span></div>
-  <div class="group"><button id="measure">测量延时</button><span id="timer">0.0s</span></div>
-  <label><input id="enabled" type="checkbox"> 启用延时</label><label><input id="muted" type="checkbox"> 静音</label>
-  <span id="status" class="status">正在加载…</span>
+  <div class="row row1">
+    <span class="title">B站直播音频延时神器</span>
+    <a href="#" id="help-link">帮助</a>
+    <a href="#" id="author-link">作者主页</a>
+  </div>
+  <div class="row row2">
+    <button id="sage" class="primary">打开悲怆先知</button>
+    <button id="test">打开测试页</button>
+    <button id="custom">打开自选直播</button>
+  </div>
+  <div class="row row3">
+    <div class="group">
+      <button data-delta="-5">−5s</button><button data-delta="-1">−1s</button><button data-delta="-0.5">−0.5s</button><button data-delta="-0.1">−0.1s</button>
+      <input id="delay" class="current" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" value="0.0" aria-label="当前延时输入">
+      <button data-delta="0.1">+0.1s</button><button data-delta="0.5">+0.5s</button><button data-delta="1">+1s</button><button data-delta="5">+5s</button>
+    </div>
+    <div class="group"><button id="apply">应用延时</button><span class="applied">当前生效延时：<b id="applied">0.0s</b></span></div>
+    <div class="group"><button id="measure">测量延时</button><span id="timer">0.0s</span></div>
+    <label><input id="enabled" type="checkbox"> 启用延时</label>
+    <label><input id="muted" type="checkbox"> 静音</label>
+  </div>
+  <div class="row row4"><span id="status" class="status">正在加载…</span></div>
 </div>
 <div id="custom-dialog" class="popup-backdrop" hidden>
   <form class="popup" id="custom-form">
     <h3>打开自选直播</h3>
     <label for="custom-value">直播间 URL 或 ID</label>
-    <input id="custom-value" type="text" autocomplete="off" placeholder="例如 22604707 或 https://live.bilibili.com/..."><div class="actions"><button type="button" id="custom-cancel">取消</button><button type="submit" class="primary">打开</button></div>
+    <input id="custom-value" type="text" autocomplete="off" placeholder="例如 22604707 或 https://live.bilibili.com/...">
+    <div class="actions"><button type="button" id="custom-cancel">取消</button><button type="submit" class="primary">打开</button></div>
   </form>
 </div>
 <script src="toolbar.js"></script>

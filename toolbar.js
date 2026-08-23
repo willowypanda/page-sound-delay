@@ -1,6 +1,7 @@
 const api = window.pageSoundDelay;
 const $ = id => document.getElementById(id);
 let delay = 0;
+let appliedDelay = 0;
 function readDelayInput() {
   const raw = $('delay').value.trim().replace(',', '.');
   if (raw === '' || raw === '.' || raw === '-') return null;
@@ -23,6 +24,7 @@ function showApplied(value) {
 function applyDelay(value) {
   if (!validDelay(value)) { alert('请输入 0 到 120 之间的合法延时（单位：秒）'); return false; }
   delay = Math.round(value * 10) / 10;
+  appliedDelay = delay;
   showDelay(delay);
   showApplied(delay);
   api.send('set-delay', delay);
@@ -89,7 +91,10 @@ api.onStatus(status => { $('status').textContent = status; });
 api.onState(state => {
   if (measuring) return;
   if (!state) return;
+  // 只在页面打开时同步，用户正在编辑时不要覆盖
+  if (document.activeElement === $('delay')) return;
   delay = Number(state.delay) || 0;
+  appliedDelay = delay;
   showDelay(delay);
   showApplied(delay);
   $('enabled').checked = Boolean(state.enabled);
