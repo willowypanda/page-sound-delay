@@ -9,7 +9,7 @@
 <script src="https://cdn.jsdelivr.net/npm/flv.js@1.6.2/dist/flv.min.js"></script>
 <style>
   #player-box { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #000; }
-  #player-box iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  #player-box video { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
   .delay-btn { min-width: 6.5rem; }
   #timer-display { font-variant-numeric: tabular-nums; font-size: 1.6rem; }
   #audio-status { font-size: .85rem; }
@@ -35,8 +35,10 @@
 
   <!-- 播放器 -->
   <div id="player-box" class="mb-3 rounded overflow-hidden">
-    <iframe id="bili-player" allowfullscreen scrolling="no"
-      src="https://player.bilibili.com/player.html?room_id=8178490&autoplay=1&muted=0"></iframe>
+    <video id="live-video" controls autoplay playsinline></video>
+    <div id="player-loading" class="position-absolute top-50 start-50 translate-middle text-secondary">
+      点击“加载直播间”开始播放
+    </div>
   </div>
 
   <!-- 延时控制 -->
@@ -86,7 +88,7 @@
 (() => {
   const $ = id => document.getElementById(id);
   const roomInput = $('room-input');
-  const iframe = $('bili-player');
+  const playerLoading = $('player-loading');
   const delayDisplay = $('delay-display');
   const audioStatus = $('audio-status');
   const timerDisplay = $('timer-display');
@@ -100,9 +102,8 @@
   function loadRoom() {
     const id = roomInput.value.trim();
     if (!/^\d+$/.test(id)) { alert('请输入有效的直播间 ID(纯数字)'); return; }
-    iframe.src = `https://player.bilibili.com/player.html?room_id=${id}&autoplay=1&muted=${delayEnabled ? 1 : 0}`;
-    if (delayEnabled) startAudioPipeline().catch(e => setStatus('音频管线错误: ' + e.message, true));
-    else stopAudioPipeline();
+    stopAudioPipeline();
+    startAudioPipeline().catch(e => setStatus('播放错误: ' + e.message, true));
   }
   $('btn-load-room').addEventListener('click', loadRoom);
   roomInput.addEventListener('keydown', e => { if (e.key === 'Enter') loadRoom(); });
@@ -130,18 +131,12 @@
   // ---------- 启用开关 ----------
   $('delay-switch').addEventListener('change', async e => {
     delayEnabled = e.target.checked;
-    iframe.src = iframe.src.replace(/muted=[01]/, 'muted=' + (delayEnabled ? 1 : 0));
     if (delayEnabled) {
-      try {
-        await startAudioPipeline();
-      } catch (err) {
-        setStatus('启动失败: ' + err.message, true);
-        delayEnabled = false;
-        $('delay-switch').checked = false;
-        iframe.src = iframe.src.replace(/muted=[01]/, 'muted=0');
-      }
+      if (!flvPlayer) await startAudioPipeline();
+      renderDelay();
     } else {
-      stopAudioPipeline();
+      if (delayNode) delayNode.delayTime.setTargetAtTime(0, audioCtx.currentTime, 0.05);
+      setStatus('延时已关闭,播放实时声音');
     }
   });
 
@@ -172,11 +167,10 @@
     const streamUrl = await getLiveStreamUrl(roomId);
     if (!streamUrl) throw new Error('无法获取直播流地址(可能未开播或接口受限)');
 
-    mediaEl = document.createElement('video');
+    mediaEl = $('live-video');
+    playerLoading.classList.add('d-none');
     mediaEl.muted = false;
     mediaEl.volume = 1;
-    mediaEl.style.display = 'none';
-    document.body.appendChild(mediaEl);
 
     flvPlayer = flvjs.createPlayer({
       type: 'flv',
@@ -217,8 +211,8 @@
     try { if (srcNode) srcNode.disconnect(); } catch (_) {}
     try { if (delayNode) delayNode.disconnect(); } catch (_) {}
     try { if (audioCtx) audioCtx.close(); } catch (_) {}
-    try { if (mediaEl) mediaEl.remove(); } catch (_) {}
-    flvPlayer = srcNode = delayNode = audioCtx = mediaEl = null;
+    if (mediaEl) { mediaEl.removeAttribute('src'); mediaEl.load(); }
+    flvPlayer = srcNode = delayNode = audioCtx = null;
     setStatus('');
   }
 
