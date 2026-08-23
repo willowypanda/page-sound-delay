@@ -7,7 +7,7 @@
   "scripts": {
     "start": "electron .",
     "start:unsafe": "electron --no-sandbox .",
-    "check": "node --check main.js && node --check preload.js"
+    "check": "node --check main.js && node --check preload.js && node --check toolbar-preload.js && node --check toolbar.js"
   },
   "devDependencies": {
     "electron": "^37.0.0"

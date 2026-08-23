@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Page Sound Delay Controls</title>
+<style>
+:root { color-scheme: dark; }
+* { box-sizing: border-box; }
+html, body { margin:0; height:100%; overflow:hidden; background:#161b22; color:#e8edf2; font:14px/1.4 system-ui,sans-serif; }
+body { padding:8px 12px; border-bottom:1px solid #48515b; }
+.toolbar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.group { display:flex; gap:5px; align-items:center; }
+.title { font-weight:700; margin-right:4px; white-space:nowrap; }
+button,input { border:1px solid #59636d; border-radius:6px; color:#edf2f7; background:#28313a; padding:5px 8px; }
+button { cursor:pointer; white-space:nowrap; }
+button:hover { background:#3b4854; }
+.primary { background:#1677d2; border-color:#2489e5; }
+.danger { background:#a93636; border-color:#d45555; }
+input[type=text] { width:100px; }
+input[type=number] { width:88px; }
+.value { font-size:16px; font-weight:700; min-width:48px; text-align:center; }
+.status { color:#9fb1c2; font-size:12px; flex:1; min-width:170px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+</style>
+</head>
+<body>
+<div class="toolbar">
+  <span class="title">Page Sound Delay</span>
+  <div class="group"><input id="room" type="text" value="8178490" placeholder="直播间 ID"><button id="open" class="primary">打开直播间</button></div>
+  <div class="group"><button data-delta="-5">−5s</button><button data-delta="-1">−1s</button><button data-delta="-0.5">−0.5s</button><button data-delta="-0.1">−0.1s</button><span id="value" class="value">0.0s</span><button data-delta="0.1">+0.1s</button><button data-delta="0.5">+0.5s</button><button data-delta="1">+1s</button><button data-delta="5">+5s</button></div>
+  <div class="group"><input id="manual" type="number" min="0" max="120" step="0.1" placeholder="延时秒数"><button id="apply">应用</button></div>
+  <div class="group"><button id="measure">测量延时</button><span id="timer">0.0s</span></div>
+  <label><input id="enabled" type="checkbox"> 启用延时</label>
+  <button id="resume">播放 / 恢复音频</button>
+  <span id="status" class="status">正在加载 Bilibili 页面…</span>
+</div>
+<script src="toolbar.js"></script>
+</body>
+</html>
