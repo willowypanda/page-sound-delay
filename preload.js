@@ -7,6 +7,7 @@ const { ipcRenderer } = require('electron');
   let graph = null;
   let delaySeconds = 0;
   let enabled = false;
+  let muted = false;
 
   function status(message) {
     ipcRenderer.send('psd-page-status', message);
@@ -18,6 +19,8 @@ const { ipcRenderer } = require('electron');
     graph.delay.delayTime.setTargetAtTime(delaySeconds, now, 0.03);
     graph.direct.gain.setTargetAtTime(enabled ? 0 : 1, now, 0.03);
     graph.delayed.gain.setTargetAtTime(enabled ? 1 : 0, now, 0.03);
+    graph.ctx.listener.setPosition(0, 0, 0);
+    graph.master.gain.setTargetAtTime(muted ? 0 : 1, now, 0.03);
   }
 
   function findVideo() {
@@ -33,9 +36,12 @@ const { ipcRenderer } = require('electron');
       const direct = ctx.createGain();
       const delay = ctx.createDelay(MAX_DELAY + 1);
       const delayed = ctx.createGain();
+      const master = ctx.createGain();
       source.connect(direct).connect(ctx.destination);
-      source.connect(delay).connect(delayed).connect(ctx.destination);
-      graph = { ctx, source, direct, delay, delayed };
+      source.connect(delay).connect(delayed).connect(master).connect(ctx.destination);
+      direct.disconnect();
+      direct.connect(master);
+      graph = { ctx, source, direct, delay, delayed, master };
       updateGraph();
       status(ctx.state === 'running' ? '播放器已连接' : '播放器已找到，请点击“播放 / 恢复音频”');
       video.addEventListener('play', () => ctx.resume().catch(() => {}), { passive: true });
@@ -71,6 +77,10 @@ const { ipcRenderer } = require('electron');
       enabled = Boolean(command.payload);
       updateGraph();
       status(enabled ? `声音延时已启用（${delaySeconds.toFixed(1)}s）` : '声音延时已关闭');
+    } else if (command.type === 'set-muted') {
+      muted = Boolean(command.payload);
+      updateGraph();
+      status(muted ? '已静音' : '已取消静音');
     } else if (command.type === 'resume') {
       resume();
     }

@@ -2,7 +2,8 @@ const { app, BrowserWindow, WebContentsView, ipcMain, session } = require('elect
 const path = require('node:path');
 
 const DEFAULT_ROOM = '8178490';
-const TOOLBAR_HEIGHT = 92;
+let toolbarHeight = 92;
+let appState = { delay: 0, enabled: false, muted: false };
 
 // AppImage 无法可靠保留 chrome-sandbox 的 root:root 4755 权限。
 // 仅对 AppImage 关闭 Chromium sandbox；.deb 和开发运行保持正常 sandbox。
@@ -19,11 +20,26 @@ function liveUrl(room) {
 function layout() {
   if (!win || !pageView) return;
   const [width, height] = win.getContentSize();
-  pageView.setBounds({ x: 0, y: TOOLBAR_HEIGHT, width, height: Math.max(1, height - TOOLBAR_HEIGHT) });
+  pageView.setBounds({ x: 0, y: toolbarHeight, width, height: Math.max(1, height - toolbarHeight) });
 }
 
 function sendStatus(message) {
   if (win && !win.isDestroyed()) win.webContents.send('psd-status', message);
+}
+
+function sendState() {
+  if (win && !win.isDestroyed()) win.webContents.send('psd-state', appState);
+}
+
+function roomUrl(value) {
+  const raw = String(value).trim();
+  if (/^\d+$/.test(raw)) return liveUrl(raw);
+  if (!/^https?:\/\//i.test(raw)) return null;
+  try {
+    const url = new URL(raw);
+    if (url.protocol !== 'https:' || (url.hostname !== 'live.bilibili.com' && !url.hostname.endsWith('.bilibili.com'))) return null;
+    return url.href;
+  } catch (_) { return null; }
 }
 
 function createWindow() {
@@ -32,7 +48,7 @@ function createWindow() {
     height: 900,
     minWidth: 900,
     minHeight: 650,
-    title: 'Page Sound Delay - Bilibili',
+    title: 'B站直播音频延时神器',
     webPreferences: {
       preload: path.join(__dirname, 'toolbar-preload.js'),
       contextIsolation: true,
@@ -41,7 +57,7 @@ function createWindow() {
     },
   });
 
-  win.loadFile(path.join(__dirname, 'toolbar.html'));
+  win.loadFile(path.join(__dirname, 'toolbar.html')).then(sendState);
 
   pageView = new WebContentsView({
     webPreferences: {
@@ -70,13 +86,24 @@ function createWindow() {
   win.on('closed', () => { win = null; pageView = null; });
 }
 
+ipcMain.on('psd-toolbar-height', (_event, height) => {
+  toolbarHeight = Math.max(60, Math.min(220, Math.ceil(Number(height) || 92)));
+  layout();
+});
+
 ipcMain.on('psd-command', (_event, command) => {
   if (!pageView || !command) return;
-  if (command.type === 'open-room' && /^\d+$/.test(String(command.payload))) {
-    pageView.webContents.loadURL(liveUrl(command.payload));
-    sendStatus(`正在打开直播间 ${command.payload}…`);
+  if (command.type === 'open-room' || command.type === 'open-custom') {
+    const target = roomUrl(command.payload);
+    if (!target) { sendStatus('直播间 ID 或 URL 无效'); return; }
+    pageView.webContents.loadURL(target);
+    sendStatus('正在打开直播间…');
     return;
   }
+  if (command.type === 'set-delay') appState.delay = Math.max(0, Math.min(120, Number(command.payload) || 0));
+  if (command.type === 'set-enabled') appState.enabled = Boolean(command.payload);
+  if (command.type === 'set-muted') appState.muted = Boolean(command.payload);
+  sendState();
   pageView.webContents.send('psd-control', command);
 });
 

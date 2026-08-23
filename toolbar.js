@@ -5,50 +5,65 @@ let measuring = false;
 let started = 0;
 let timerId;
 
-function setDelay(value) {
-  delay = Math.max(0, Math.min(120, Math.round(value * 10) / 10));
-  $('value').textContent = delay.toFixed(1) + 's';
+function validDelay(value) {
+  return Number.isFinite(value) && value >= 0 && value <= 120;
+}
+function showDelay(value) {
+  $('delay').value = value.toFixed(1);
+}
+function applyDelay(value) {
+  if (!validDelay(value)) { alert('请输入 0 到 120 之间的合法延时（单位：秒）'); return false; }
+  delay = Math.round(value * 10) / 10;
+  showDelay(delay);
+  $('applied').textContent = delay.toFixed(1) + 's';
   api.send('set-delay', delay);
+  return true;
 }
 
 document.querySelectorAll('[data-delta]').forEach(button => {
-  button.onclick = () => setDelay(delay + Number(button.dataset.delta));
+  button.onclick = () => applyDelay(delay + Number(button.dataset.delta));
 });
-
 $('apply').onclick = () => {
-  const value = Number($('manual').value);
-  if (Number.isFinite(value) && value >= 0 && value <= 120) setDelay(value);
-  else $('status').textContent = '延时应在 0–120 秒之间';
+  const value = Number($('delay').value);
+  applyDelay(value);
 };
-
 $('enabled').onchange = event => api.send('set-enabled', event.target.checked);
-$('resume').onclick = () => api.send('resume');
-$('open').onclick = () => {
-  const room = $('room').value.trim();
-  if (/^\d+$/.test(room)) api.send('open-room', room);
-  else $('status').textContent = '请输入纯数字直播间 ID';
+$('muted').onchange = event => api.send('set-muted', event.target.checked);
+
+$('test').onclick = () => api.send('open-room', '8178490');
+$('sage').onclick = () => api.send('open-room', '22604707');
+$('custom').onclick = () => {
+  const value = prompt('请输入 Bilibili 直播间 URL 或 ID：', '');
+  if (value === null) return;
+  api.send('open-custom', value.trim());
 };
-$('room').onkeydown = event => { if (event.key === 'Enter') $('open').click(); };
 
 $('measure').onclick = () => {
   if (!measuring) {
     measuring = true;
     started = performance.now();
-    $('measure').textContent = '结束计时';
+    $('measure').textContent = '结束测量';
     $('measure').classList.add('danger');
-    timerId = setInterval(() => {
-      $('timer').textContent = ((performance.now() - started) / 1000).toFixed(1) + 's';
-    }, 100);
+    timerId = setInterval(() => showDelay((performance.now() - started) / 1000), 100);
   } else {
     measuring = false;
     clearInterval(timerId);
     const result = Math.min(120, Math.round((performance.now() - started) / 100) / 10);
     $('measure').textContent = '测量延时';
     $('measure').classList.remove('danger');
-    setDelay(result);
+    applyDelay(result);
     $('enabled').checked = true;
     api.send('set-enabled', true);
   }
 };
 
 api.onStatus(status => { $('status').textContent = status; });
+api.onState(state => {
+  if (!state) return;
+  delay = Number(state.delay) || 0;
+  showDelay(delay);
+  $('applied').textContent = delay.toFixed(1) + 's';
+  $('enabled').checked = Boolean(state.enabled);
+  $('muted').checked = Boolean(state.muted);
+});
+showDelay(0);
