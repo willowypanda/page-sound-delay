@@ -3,6 +3,12 @@ const path = require('node:path');
 
 const DEFAULT_ROOM = '8178490';
 const TOOLBAR_HEIGHT = 92;
+
+// AppImage 无法可靠保留 chrome-sandbox 的 root:root 4755 权限。
+// 仅对 AppImage 关闭 Chromium sandbox；.deb 和开发运行保持正常 sandbox。
+if (process.platform === 'linux' && process.env.APPIMAGE) {
+  app.commandLine.appendSwitch('no-sandbox');
+}
 let win;
 let pageView;
 
