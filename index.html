@@ -194,7 +194,7 @@
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     srcNode = audioCtx.createMediaElementSource(mediaEl);
     delayNode = audioCtx.createDelay(7200); // 最大 2 小时
-    delayNode.delayTime.value = Math.max(delaySeconds, 0);
+    delayNode.delayTime.value = delayEnabled ? Math.max(delaySeconds, 0) : 0;
     srcNode.connect(delayNode);
     delayNode.connect(audioCtx.destination);
     if (audioCtx.state === 'suspended') setStatus('音频被浏览器暂停,请点击"恢复音频"', true);
