@@ -35,6 +35,7 @@
     "linux": {
       "target": ["AppImage", "deb"],
       "category": "AudioVideo",
+      "maintainer": "willowypanda <willowypanda@users.noreply.github.com>",
       "artifactName": "${name}-${version}-${arch}.${ext}"
     },
     "mac": {
