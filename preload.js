@@ -15,7 +15,7 @@
   let measureTimer = null;
 
   const css = `
-    #psd-panel { position: fixed; z-index: 2147483647; top: 0; left: 0; right: 0; width: auto; color: #e8edf2; background: rgba(22,27,34,.98); border-bottom: 1px solid #48515b; box-shadow: 0 3px 16px rgba(0,0,0,.4); font: 14px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; padding: 8px 14px; }
+    #psd-panel { position: sticky; z-index: 2147483647; top: 0; left: 0; right: 0; width: auto; color: #e8edf2; background: rgba(22,27,34,.98); border-bottom: 1px solid #48515b; box-shadow: 0 3px 16px rgba(0,0,0,.4); font: 14px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; padding: 8px 14px; }
     #psd-panel * { box-sizing: border-box; }
     #psd-panel .psd-title { display:flex; justify-content:space-between; align-items:center; font-weight:700; white-space:nowrap; }
     #psd-panel .psd-row { display:flex; gap:5px; align-items:center; margin:0 8px 0 0; flex-wrap:wrap; }
@@ -54,7 +54,8 @@
       </div>
       <div class="psd-help">登录请直接使用 Bilibili 页面右上角登录。延时仅作用于声音,画面保持直播端。</div>
     `;
-    document.documentElement.appendChild(panel);
+    // 放进 body 的文档流中,让顶部控制条占据自己的高度,不会覆盖 Bilibili 登录区。
+    (document.body || document.documentElement).prepend(panel);
 
     panel.querySelector('#psd-close').onclick = () => panel.remove();
     panel.querySelector('#psd-room-go').onclick = () => {
