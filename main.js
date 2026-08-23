@@ -3,6 +3,7 @@ const path = require('node:path');
 
 const DEFAULT_ROOM = '22604707';
 let toolbarHeight = 92;
+let toolbarExpanded = false;
 let appState = { delay: 0, enabled: false, muted: false };
 
 // AppImage 无法可靠保留 chrome-sandbox 的 root:root 4755 权限。
@@ -20,7 +21,13 @@ function liveUrl(room) {
 function layout() {
   if (!win || !pageView) return;
   const [width, height] = win.getContentSize();
-  pageView.setBounds({ x: 0, y: toolbarHeight, width, height: Math.max(1, height - toolbarHeight) });
+  const effectiveHeight = toolbarExpanded ? Math.min(320, height - 100) : toolbarHeight;
+  pageView.setBounds({ x: 0, y: effectiveHeight, width, height: Math.max(1, height - effectiveHeight) });
+}
+
+function expandToolbar(expanded) {
+  toolbarExpanded = expanded;
+  layout();
 }
 
 function sendStatus(message) {
@@ -93,6 +100,10 @@ function createWindow() {
 ipcMain.on('psd-toolbar-height', (_event, height) => {
   toolbarHeight = Math.max(60, Math.min(220, Math.ceil(Number(height) || 92)));
   layout();
+});
+
+ipcMain.on('psd-expand-toolbar', (_event, expanded) => {
+  expandToolbar(Boolean(expanded));
 });
 
 ipcMain.on('request-state', sendState);

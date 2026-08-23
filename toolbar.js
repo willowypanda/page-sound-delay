@@ -46,10 +46,14 @@ $('test').onclick = () => api.send('open-room', '8178490');
 $('sage').onclick = () => api.send('open-room', '22604707');
 $('custom').onclick = () => {
   $('custom-dialog').hidden = false;
+  api.expandToolbar(true);
   $('custom-value').value = '';
   $('custom-value').focus();
 };
-$('custom-cancel').onclick = () => { $('custom-dialog').hidden = true; };
+$('custom-cancel').onclick = () => {
+  $('custom-dialog').hidden = true;
+  api.expandToolbar(false);
+};
 $('custom-form').onsubmit = event => {
   event.preventDefault();
   const raw = $('custom-value').value.trim();
@@ -58,6 +62,7 @@ $('custom-form').onsubmit = event => {
     return;
   }
   $('custom-dialog').hidden = true;
+  api.expandToolbar(false);
   api.send('open-custom', raw);
 };
 
